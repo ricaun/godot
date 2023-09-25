@@ -20,7 +20,10 @@ public static partial class ScriptManagerBridge
             // TODO: What if this is called while unloading a load context, but after we already did cleanup in preparation for unloading?
 
             _scriptTypeMap.Add(scriptPtr, scriptType);
-            _typeScriptMap.Add(scriptType, scriptPtr);
+
+            // Due to generic classes, more than one class can point to the same type, so
+            // there could be duplicate keys in this case. We only add a type as key once.
+            _typeScriptMap.TryAdd(scriptType, scriptPtr);
 
             if (AlcReloadCfg.IsAlcReloadingEnabled)
             {
@@ -36,9 +39,14 @@ public static partial class ScriptManagerBridge
 
         public bool RemoveByScriptType(Type scriptType, out IntPtr scriptPtr)
         {
-            if (_typeScriptMap.Remove(scriptType, out scriptPtr))
-                return _scriptTypeMap.Remove(scriptPtr);
-            return false;
+            // Remove all script pointers that point to this type.
+            foreach (var pair in _scriptTypeMap
+                         .Where(p => p.Value == scriptType).ToArray())
+            {
+                _scriptTypeMap.Remove(pair.Key);
+            }
+
+            return _typeScriptMap.Remove(scriptType, out scriptPtr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
