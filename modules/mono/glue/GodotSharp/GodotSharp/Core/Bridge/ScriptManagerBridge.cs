@@ -547,7 +547,7 @@ namespace Godot.Bridge
 
                     if (!_scriptDataForReload.TryGetValue(scriptPtr, out var dataForReload))
                     {
-                        GD.PushError("Missing class qualified name for reloading script");
+                        GD.PushError("Missing class qualified name for reloading script (Happens when a generic class is used.)");
                         return godot_bool.False;
                     }
 
