@@ -27,7 +27,7 @@ namespace Godot.Bridge
             {
                 foreach (var type in typesInAlc.Keys)
                 {
-                    GD.PushWarning($"OnAlcUnloading: {type}");
+                    //GD.PushWarning($"OnAlcUnloading: {type}");
 
                     if (_scriptTypeBiMap.RemoveByScriptType(type, out IntPtr[] scriptPtrs) &&
                         !_pathTypeBiMap.TryGetScriptPath(type, out _))
@@ -311,7 +311,7 @@ namespace Godot.Bridge
                 if (scriptPathAttr == null)
                     return;
 
-                GD.PushWarning($"LookupScriptForClass: {scriptPathAttr.Path} {type}");
+                //GD.PushWarning($"LookupScriptForClass: {scriptPathAttr.Path} {type}");
 
                 _pathTypeBiMap.Add(scriptPathAttr.Path, type);
 
@@ -553,7 +553,7 @@ namespace Godot.Bridge
             {
                 lock (_scriptTypeBiMap.ReadWriteLock)
                 {
-                    GD.PushWarning($"TryReloadRegisteredScriptWithClass: {scriptPtr}");
+                    //GD.PushWarning($"TryReloadRegisteredScriptWithClass: {scriptPtr}");
 
                     if (_scriptTypeBiMap.TryGetScriptType(scriptPtr, out _))
                     {
