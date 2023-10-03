@@ -1,5 +1,6 @@
 #nullable enable
 
+using Godot.NativeInterop;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,7 +11,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Runtime.Serialization;
-using Godot.NativeInterop;
 
 namespace Godot.Bridge
 {
@@ -27,13 +27,28 @@ namespace Godot.Bridge
             {
                 foreach (var type in typesInAlc.Keys)
                 {
-                    if (_scriptTypeBiMap.RemoveByScriptType(type, out IntPtr scriptPtr) &&
+                    GD.PushWarning($"OnAlcUnloading: {type}");
+
+                    if (_scriptTypeBiMap.RemoveByScriptType(type, out IntPtr[] scriptPtrs) &&
                         !_pathTypeBiMap.TryGetScriptPath(type, out _))
                     {
-                        // For scripts without a path, we need to keep the class qualified name for reloading
-                        _scriptDataForReload.TryAdd(scriptPtr,
-                            (type.Assembly.GetName().Name, type.FullName ?? type.ToString()));
+                        foreach (var scriptPtr in scriptPtrs)
+                        {
+                            GD.PushWarning($" RemoveByScriptType[{scriptPtrs.Length}]: {type} {scriptPtr}");
+                            // For scripts without a path, we need to keep the class qualified name for reloading
+                            _scriptDataForReload.TryAdd(scriptPtr,
+                                (type.Assembly.GetName().Name, type.FullName ?? type.ToString()));
+                        }
                     }
+
+                    //if (_scriptTypeBiMap.RemoveByScriptType(type, out IntPtr scriptPtr) &&
+                    //    !_pathTypeBiMap.TryGetScriptPath(type, out _))
+                    //{
+                    //    GD.PushWarning($" RemoveByScriptType: {type} {scriptPtr}");
+                    //    // For scripts without a path, we need to keep the class qualified name for reloading
+                    //    _scriptDataForReload.TryAdd(scriptPtr,
+                    //        (type.Assembly.GetName().Name, type.FullName ?? type.ToString()));
+                    //}
 
                     _pathTypeBiMap.RemoveByScriptType(type);
                 }
@@ -296,6 +311,8 @@ namespace Godot.Bridge
                 if (scriptPathAttr == null)
                     return;
 
+                GD.PushWarning($"LookupScriptForClass: {scriptPathAttr.Path} {type}");
+
                 _pathTypeBiMap.Add(scriptPathAttr.Path, type);
 
                 // This method may be called before initialization.
@@ -536,6 +553,8 @@ namespace Godot.Bridge
             {
                 lock (_scriptTypeBiMap.ReadWriteLock)
                 {
+                    GD.PushWarning($"TryReloadRegisteredScriptWithClass: {scriptPtr}");
+
                     if (_scriptTypeBiMap.TryGetScriptType(scriptPtr, out _))
                     {
                         // NOTE:
@@ -547,7 +566,7 @@ namespace Godot.Bridge
 
                     if (!_scriptDataForReload.TryGetValue(scriptPtr, out var dataForReload))
                     {
-                        GD.PushError("Missing class qualified name for reloading script (Happens when a generic class is used.)");
+                        GD.PushError($"[{scriptPtr}] Missing class qualified name for reloading script (Happens when a generic class is used.)");
                         return godot_bool.False;
                     }
 

@@ -21,9 +21,12 @@ public static partial class ScriptManagerBridge
 
             _scriptTypeMap.Add(scriptPtr, scriptType);
 
+            //GD.PushWarning($"TryAdd: {scriptType} {scriptPtr} | {_typeScriptMap.ContainsKey(scriptType)}");
+
             // Due to generic classes, more than one class can point to the same type, so
             // there could be duplicate keys in this case. We only add a type as key once.
-            _typeScriptMap.TryAdd(scriptType, scriptPtr);
+            //_typeScriptMap.TryAdd(scriptType, scriptPtr);
+            _typeScriptMap[scriptType] = scriptPtr;
 
             if (AlcReloadCfg.IsAlcReloadingEnabled)
             {
@@ -47,6 +50,23 @@ public static partial class ScriptManagerBridge
             }
 
             return _typeScriptMap.Remove(scriptType, out scriptPtr);
+        }
+
+        public bool RemoveByScriptType(Type scriptType, out IntPtr[] scriptPtrs)
+        {
+            scriptPtrs = _scriptTypeMap
+                .Where(p => p.Value == scriptType)
+                .Select(p => p.Key)
+                .ToArray();
+
+            // Remove all script pointers that point to this type.
+            foreach (var pair in _scriptTypeMap
+                         .Where(p => p.Value == scriptType).ToArray())
+            {
+                _scriptTypeMap.Remove(pair.Key);
+            }
+
+            return _typeScriptMap.Remove(scriptType, out _);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
