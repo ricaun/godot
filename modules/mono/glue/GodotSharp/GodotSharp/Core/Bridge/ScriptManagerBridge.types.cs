@@ -26,7 +26,7 @@ public static partial class ScriptManagerBridge
             // Due to generic classes, more than one class can point to the same type, so
             // there could be duplicate keys in this case. We only add a type as key once.
             //_typeScriptMap.TryAdd(scriptType, scriptPtr);
-            _typeScriptMap[scriptType] = scriptPtr;
+            _typeScriptMap[scriptType] = scriptPtr; // This does not work
 
             if (AlcReloadCfg.IsAlcReloadingEnabled)
             {
