@@ -21,13 +21,6 @@
     <IntermediateOutputPath Condition=" '$(IntermediateOutputPath)' == '' ">$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   
-  <Target Condition=" $([MSBuild]::VersionLessThan($(MSBuildAssemblyVersion), '17.3')) " Name="GodotProjectDir" BeforeTargets="Build">
-    <Error Text="Cannot build from path containing '%23', move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%23'))" /> <!-- # -->
-    <Error Text="Cannot build from path containing '%3B', move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%3B'))" /> <!-- ; -->
-    <Error Text="Cannot build from path containing newlines, move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%0A'))" /> <!-- \n -->
-    <Error Text="Cannot build from path containing newlines, move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%0D'))" /> <!-- \r -->
-  </Target>
-  
   <PropertyGroup>
     <!--
     Define constant to determine whether the real_t type in Godot is double precision or not.
