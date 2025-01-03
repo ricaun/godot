@@ -2,6 +2,33 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" Condition=" '$(GodotSdkImportsMicrosoftNetSdk)' == 'true' " />
 
   <PropertyGroup>
+    <!-- 
+    Set the GodotProjectDir property to the project directory if not defined. 
+    The GodotProjectDir must be the directory with the 'project.godot' file.
+    -->
+    <GodotProjectDir Condition=" '$(GodotProjectDir)' == '' ">$(MSBuildProjectDirectory)</GodotProjectDir>
+    <GodotProjectDir>$([MSBuild]::EnsureTrailingSlash('$(GodotProjectDir)'))</GodotProjectDir>
+    <GodotProjectDirBase64 Condition=" $([MSBuild]::VersionGreaterThanOrEquals($(MSBuildAssemblyVersion), '17.3')) ">$([MSBuild]::ConvertToBase64('$(GodotProjectDir)'))</GodotProjectDirBase64>
+
+    <!-- Custom output paths for Godot projects. In brief, 'bin\' and 'obj\' are moved to '$(GodotProjectDir)\.godot\mono\temp\'. -->
+    <BaseOutputPath>$(GodotProjectDir).godot\mono\temp\bin\</BaseOutputPath>
+    <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
+    <!--
+    Use custom IntermediateOutputPath and BaseIntermediateOutputPath only if it wasn't already set.
+    Otherwise the old values may have already been changed by MSBuild which can cause problems with NuGet.
+    -->
+    <BaseIntermediateOutputPath Condition=" '$(BaseIntermediateOutputPath)' == '' ">$(GodotProjectDir).godot\mono\temp\obj\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath Condition=" '$(IntermediateOutputPath)' == '' ">$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+  
+  <Target Condition=" $([MSBuild]::VersionLessThan($(MSBuildAssemblyVersion), '17.3')) " Name="GodotProjectDir" BeforeTargets="Build">
+    <Error Text="Cannot build from path containing '%23', move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%23'))" /> <!-- # -->
+    <Error Text="Cannot build from path containing '%3B', move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%3B'))" /> <!-- ; -->
+    <Error Text="Cannot build from path containing newlines, move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%0A'))" /> <!-- \n -->
+    <Error Text="Cannot build from path containing newlines, move your project or update dotnet to the latest version." Condition="$(GodotProjectDir.Contains('%0D'))" /> <!-- \r -->
+  </Target>
+  
+  <PropertyGroup>
     <!--
     Define constant to determine whether the real_t type in Godot is double precision or not.
     By default this is false, like the official Godot builds. If someone is using a custom
